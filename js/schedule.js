@@ -8,10 +8,10 @@
     return entries.filter((x) => x.day === day).sort((a, b) => a.start.localeCompare(b.start));
   }
 
-  function table(entries, personal) {
-    return '<div class="table-wrap"><table class="class-table"><thead><tr><th>Uhrzeit</th><th>Fach</th><th>Lehrer</th>' + (personal ? '<th></th>' : '') + '</tr></thead><tbody>' +
+  function table(entries, personal, canEdit, classId) {
+    return '<div class="table-wrap"><table class="class-table"><thead><tr><th>Uhrzeit</th><th>Fach</th><th>Lehrer</th>' + (personal || canEdit ? '<th></th>' : '') + '</tr></thead><tbody>' +
       entries.map((x) => '<tr><td>' + E(x.start) + '–' + E(x.end) + '</td><td><b>' + E(x.subject) + '</b></td><td>' + E(x.teacher || '—') + '</td>' +
-        (personal ? '<td><button class="icon-btn" data-action="schedule-del" data-id="' + E(x.id) + '" aria-label="' + E(x.subject) + ' aus meinem Stundenplan löschen">' + U.icon('trash') + '</button></td>' : '') + '</tr>').join('') +
+        (personal ? '<td><button class="icon-btn" data-action="schedule-del" data-id="' + E(x.id) + '" aria-label="' + E(x.subject) + ' aus meinem Stundenplan löschen">' + U.icon('trash') + '</button></td>' : (canEdit && classId ? '<td><button class="icon-btn" data-action="class-schedule-del" data-id="' + E(x.id) + '" data-class-id="' + E(classId) + '" aria-label="' + E(x.subject) + ' aus Klassen-Stundenplan löschen">' + U.icon('trash') + '</button></td>' : '')) + '</tr>').join('') +
       '</tbody></table></div>';
   }
 
@@ -24,13 +24,18 @@
         (items.length ? table(items, true) : '<p class="mute small">Keine Stunden geplant.</p>') + '</section>';
     }).join('');
     const classPlans = classes.map((cls) => {
-      const mine = cls.members.find((m) => m.userId === HM.ClassSystem.currentUserId());
-      return '<section class="card"><div class="sec"><div><span class="eyebrow">KLASSENPLAN</span><h2>' + E(cls.name) + '</h2></div>' +
-        (cls.schedule.length ? '<label class="schedule-opt"><input type="checkbox" data-class-schedule data-class-id="' + E(cls.id) + '"' + (mine && mine.scheduleSync ? ' checked' : '') + '>Kopien automatisch übernehmen</label>' : '') +
-        '</div>' + (cls.schedule.length ? DAYS.map((day, i) => {
-          const items = entriesForDay(cls.schedule, i + 1);
-          return items.length ? '<div class="class-day"><h3>' + day + '</h3>' + table(items, false) + '</div>' : '';
-        }).join('') : '<p class="mute small">Für diese Klasse wurde noch kein Stundenplan eingetragen.</p>') + '</section>';
+      const uId = HM.ClassSystem.currentUserId();
+      const mine = Array.isArray(cls.members) ? cls.members.find((m) => (m.userId || m.uid) === uId) : null;
+      const canEdit = HM.ClassSystem.canManage(cls);
+      const clsSchedule = Array.isArray(cls.schedule) ? cls.schedule : [];
+      return '<section class="card"><div class="sec" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;"><div><span class="eyebrow">KLASSENPLAN</span><h2>' + E(cls.name) + '</h2></div>' +
+        '<div style="display:flex;gap:8px;align-items:center;">' +
+        (canEdit ? '<button class="btn sm" data-action="schedule-new" data-id="' + E(cls.id) + '">' + U.icon('plus') + 'Klassenstunde</button>' : '') +
+        (clsSchedule.length ? '<label class="schedule-opt"><input type="checkbox" data-class-schedule data-class-id="' + E(cls.id) + '"' + (mine && mine.scheduleSync ? ' checked' : '') + '>Kopien automatisch übernehmen</label>' : '') +
+        '</div></div>' + (clsSchedule.length ? DAYS.map((day, i) => {
+          const items = entriesForDay(clsSchedule, i + 1);
+          return items.length ? '<div class="class-day"><h3>' + day + '</h3>' + table(items, false, canEdit, cls.id) + '</div>' : '';
+        }).join('') : '<p class="mute small">Für diese Klasse wurde noch kein Stundenplan eingetragen.' + (canEdit ? ' Klicke oben auf „+ Klassenstunde“, um Stunden anzulegen.' : '') + '</p>') + '</section>';
     }).join('');
     return '<div class="head"><div><h1>Stundenplan</h1><p class="mute">Dein persönlicher Plan ist unabhängig von den Stundenplänen deiner Klassen.</p></div><button class="btn" data-action="personal-schedule-new">' + U.icon('plus') + 'Stunde hinzufügen</button></div>' +
       '<div class="notice">Entferne hier zum Beispiel ein abgewähltes Fach aus <b>deinem</b> Plan. Der Stundenplan der Klasse wird dadurch nicht verändert.</div>' +

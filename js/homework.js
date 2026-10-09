@@ -55,12 +55,12 @@
   };
   H.classTaskRecords = function () {
     const userId = HM.ClassSystem.currentUserId();
-    return HM.ClassSystem.classes().flatMap((cls) => cls.homework.map((task) => Object.assign({}, task, {
+    return HM.ClassSystem.classes().flatMap((cls) => (cls.homework || []).map((task) => Object.assign({}, task, {
       classTaskId: task.id, classId: cls.id, className: cls.name,
       subjectId: (HM.state.subjects.find((s) => s.name.toLowerCase() === String(task.subject || '').toLowerCase()) || {}).id || null,
       subjectName: task.subject,
       teacherId: null, teacherName: task.teacher || '', type: task.type || 'Hausaufgabe', assigned: '',
-      priority: task.priority || 'normal', due: task.due, done: Array.isArray(task.doneBy) && task.doneBy.includes(userId), notes: '', link: task.link || ''
+      priority: task.priority || 'normal', due: task.dueDate || task.due || '', done: task.status === 'erledigt' || (Array.isArray(task.doneBy) && task.doneBy.includes(userId)), notes: '', link: task.link || ''
     })));
   };
   H.allForCalendar = function () {
@@ -90,7 +90,7 @@
       return '<section class="task-group"><div class="task-group-head"><div><h2>' + E(cls.name) + '</h2><p class="small mute">Aufgaben für alle in dieser Klasse</p></div><span class="tag">' + list.length + '</span></div>' +
         (rows ? '<div class="list' + (HM.state.settings.view === 'cards' ? ' cards' : '') + '">' + rows + '</div>' : '<div class="empty compact-empty"><b>Keine Klassenaufgaben</b>Hier erscheinen Aufgaben, die für alle in ' + E(cls.name) + ' erstellt wurden.</div>') + '</section>';
     }).join('');
-    const allEmpty = mine.length === 0 && classes.every((cls) => cls.homework.length === 0);
+    const allEmpty = mine.length === 0 && classes.every((cls) => (cls.homework || []).length === 0);
     return allEmpty ? '<div class="empty"><b>Noch keine Aufgaben</b>Erstelle eine persönliche Aufgabe oder wähle beim Anlegen eine Klasse.<br><button class="btn" data-action="hw-new">' + U.icon('plus') + 'Aufgabe hinzufügen</button></div>' : '<div class="task-groups">' + mineSection + classSections + '</div>';
   }
   H.refresh = () => { const el = document.getElementById('hw-results'); if (el) el.innerHTML = results(); };

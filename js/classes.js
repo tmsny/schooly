@@ -59,27 +59,133 @@
   }
 
   const C = window.SchoolyClasses = {
+    _classesCache: [],
+    _tasksCache: {},
+    _taskUnsubscribers: {},
+    _unsubscribeClasses: null,
+
     code() {
       const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       return Array.from({ length: 8 }, () => a[Math.floor(Math.random() * a.length)]).join('');
     },
 
+    startLiveSync() {
+      const u = SchoolyAuth.user, d = SchoolyAuth.db;
+      if (!u || !d) return;
+      if (C._unsubscribeClasses) C._unsubscribeClasses();
+
+      try {
+        C._unsubscribeClasses = d.collection('classes')
+          .where('memberIds', 'array-contains', u.uid)
+          .onSnapshot((snapshot) => {
+            const list = [];
+            const activeIds = new Set();
+            snapshot.forEach(docSnap => {
+              const clsData = { id: docSnap.id, ...docSnap.data() };
+              clsData.schedule = Array.isArray(clsData.schedule) ? clsData.schedule : [];
+              list.push(clsData);
+              activeIds.add(docSnap.id);
+
+              if (!C._taskUnsubscribers[docSnap.id]) {
+                C._taskUnsubscribers[docSnap.id] = d.collection('classes')
+                  .doc(docSnap.id)
+                  .collection('tasks')
+                  .onSnapshot((tSnap) => {
+                    const tasks = tSnap.docs.map(td => {
+                      const tdData = td.data();
+                      return {
+                        id: td.id,
+                        ...tdData,
+                        due: tdData.dueDate || tdData.due || ''
+                      };
+                    }).sort((a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999'));
+                    C._tasksCache[docSnap.id] = tasks;
+                    C._syncToClassSystem();
+                  }, (err) => console.error('Tasks sync error:', err));
+              }
+            });
+
+            Object.keys(C._taskUnsubscribers).forEach(cId => {
+              if (!activeIds.has(cId)) {
+                if (typeof C._taskUnsubscribers[cId] === 'function') C._taskUnsubscribers[cId]();
+                delete C._taskUnsubscribers[cId];
+                delete C._tasksCache[cId];
+              }
+            });
+
+            C._classesCache = list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
+            C._syncToClassSystem();
+          }, (err) => {
+            console.error('Classes sync error:', err);
+          });
+      } catch (err) {
+        console.error('Failed to init classes sync:', err);
+      }
+    },
+
+    stopLiveSync() {
+      if (C._unsubscribeClasses) {
+        C._unsubscribeClasses();
+        C._unsubscribeClasses = null;
+      }
+      Object.values(C._taskUnsubscribers || {}).forEach(fn => {
+        if (typeof fn === 'function') fn();
+      });
+      C._taskUnsubscribers = {};
+      C._classesCache = [];
+      C._tasksCache = {};
+    },
+
+    _syncToClassSystem() {
+      if (location.hash === '#/classes') {
+        const root = document.getElementById('class-view');
+        if (root && C.render) C.render();
+      }
+      if (window.HM && window.HM.Homework && window.HM.Homework.refresh) {
+        window.HM.Homework.refresh();
+      }
+    },
+
+    getClassesList() {
+      return (C._classesCache || []).map(cls => ({
+        ...cls,
+        homework: (C._tasksCache && C._tasksCache[cls.id]) || []
+      }));
+    },
+
+    getClassById(classId) {
+      const cls = (C._classesCache || []).find(c => c.id === classId);
+      if (!cls) return null;
+      return {
+        ...cls,
+        homework: (C._tasksCache && C._tasksCache[cls.id]) || []
+      };
+    },
+
     async list() {
+      if (C._classesCache && C._classesCache.length > 0) {
+        return C.getClassesList();
+      }
       const u = SchoolyAuth.user, d = SchoolyAuth.db;
       if (!u || !d) return [];
       const s = await d.collection('classes').where('memberIds', 'array-contains', u.uid).get();
-      return s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
+      const list = s.docs.map(x => ({ id: x.id, schedule: [], ...x.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
+      C._classesCache = list;
+      return C.getClassesList();
     },
 
     async get(classId) {
+      const cached = C.getClassById(classId);
+      if (cached) return cached;
       const d = SchoolyAuth.db;
       if (!d || !classId) return null;
       const snap = await d.collection('classes').doc(classId).get();
-      return snap.exists ? { id: snap.id, ...snap.data() } : null;
+      return snap.exists ? { id: snap.id, schedule: [], ...snap.data() } : null;
     },
 
     async create(name, description = '', customSubjects = null) {
       const u = SchoolyAuth.user, d = SchoolyAuth.db;
+      if (!u || !d) throw Error('Bitte melde dich zuerst an.');
       name = String(name || '').trim();
       if (name.length < 2 || name.length > 70) {
         throw Error('Der Klassenname muss zwischen 2 und 70 Zeichen lang sein.');
@@ -116,6 +222,7 @@
         memberIds: [u.uid],
         members: [memberEntry],
         subjects: defaultSubjects,
+        schedule: [],
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
@@ -241,25 +348,72 @@
       await b.commit();
     },
 
+    // --- Schedule / Timetable ---
+    async saveLesson(classId, lesson) {
+      const d = SchoolyAuth.db;
+      if (!d || !classId) return;
+      const ref = d.collection('classes').doc(classId);
+      const snap = await ref.get();
+      if (!snap.exists) throw Error('Klasse existiert nicht.');
+      const curSchedule = (snap.data().schedule || []).slice();
+      const entry = {
+        id: lesson.id || ('les_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
+        day: Number(lesson.day) || 1,
+        start: lesson.start || '08:00',
+        end: lesson.end || '09:00',
+        subject: String(lesson.subject || '').trim(),
+        teacher: String(lesson.teacher || '').trim()
+      };
+      const existingIdx = curSchedule.findIndex(l => l.id === entry.id);
+      if (existingIdx >= 0) curSchedule[existingIdx] = entry;
+      else curSchedule.push(entry);
+      await ref.update({
+        schedule: curSchedule,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return entry;
+    },
+
+    async deleteLesson(classId, lessonId) {
+      const d = SchoolyAuth.db;
+      if (!d || !classId) return;
+      const ref = d.collection('classes').doc(classId);
+      const snap = await ref.get();
+      if (!snap.exists) return;
+      const curSchedule = (snap.data().schedule || []).filter(l => l.id !== lessonId);
+      await ref.update({
+        schedule: curSchedule,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    },
+
     // --- Tasks Subcollection ---
     async getTasks(classId) {
+      if (C._tasksCache && C._tasksCache[classId] && C._tasksCache[classId].length) {
+        return C._tasksCache[classId];
+      }
       const d = SchoolyAuth.db;
       if (!d || !classId) return [];
       const snap = await d.collection('classes').doc(classId).collection('tasks').get();
-      return snap.docs
-        .map(x => ({ id: x.id, ...x.data() }))
+      const tasks = snap.docs
+        .map(x => ({ id: x.id, ...x.data(), due: x.data().dueDate || x.data().due || '' }))
         .sort((a, b) => (a.dueDate || '9999').localeCompare(b.dueDate || '9999'));
+      C._tasksCache[classId] = tasks;
+      return tasks;
     },
 
     async saveTask(classId, taskData, taskId = null) {
       const u = SchoolyAuth.user, d = SchoolyAuth.db;
+      if (!u || !d) throw Error('Bitte melde dich an.');
       const col = d.collection('classes').doc(classId).collection('tasks');
+      const dueStr = String(taskData.dueDate || taskData.due || '').trim();
       const data = {
         classId,
         title: String(taskData.title || '').trim(),
         description: String(taskData.description || '').trim(),
         subject: String(taskData.subject || '').trim() || 'Allgemein',
-        dueDate: String(taskData.dueDate || '').trim(),
+        dueDate: dueStr,
+        due: dueStr,
         priority: taskData.priority || 'normal',
         status: taskData.status || 'offen',
         assignedStudentIds: taskData.assignedStudentIds || [],
@@ -282,6 +436,11 @@
 
     async toggleTaskStatus(classId, taskId, currentStatus) {
       const d = SchoolyAuth.db;
+      if (!d || !classId || !taskId) return;
+      if (!currentStatus) {
+        const cached = C._tasksCache && C._tasksCache[classId] && C._tasksCache[classId].find(t => t.id === taskId);
+        if (cached) currentStatus = cached.status;
+      }
       const next = currentStatus === 'erledigt' ? 'offen' : 'erledigt';
       await d.collection('classes').doc(classId).collection('tasks').doc(taskId).update({
         status: next,

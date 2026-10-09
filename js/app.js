@@ -99,7 +99,15 @@
   const accountLabel = document.getElementById('account-label');
   const signOut = document.getElementById('sign-out');
   if (signOut) signOut.addEventListener('click', async () => { if (window.SchoolyAuth) await SchoolyAuth.logout(); });
-  if (window.SchoolyAuth) SchoolyAuth.ready.then(user => {
-    if (accountLabel && user) accountLabel.textContent = user.displayName || user.email || 'Angemeldet';
-  });
+  if (window.SchoolyAuth) {
+    SchoolyAuth.ready.then(user => {
+      if (accountLabel && user) accountLabel.textContent = user.displayName || user.email || 'Angemeldet';
+      if (user && window.SchoolyClasses && window.SchoolyClasses.startLiveSync) {
+        window.SchoolyClasses.startLiveSync();
+      }
+      if (location.hash === '#/classes' && window.SchoolyClasses) {
+        window.SchoolyClasses.render();
+      }
+    });
+  }
 })();

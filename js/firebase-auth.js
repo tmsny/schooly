@@ -142,9 +142,17 @@
             location.replace('app.html');
           } else if (window.HM && window.HM.load) {
             await api.loadCloudData();
+            if (window.SchoolyClasses && window.SchoolyClasses.startLiveSync) {
+              window.SchoolyClasses.startLiveSync();
+            }
           }
-        } else if (location.pathname.endsWith('app.html')) {
-          location.replace('login.html');
+        } else {
+          if (window.SchoolyClasses && window.SchoolyClasses.stopLiveSync) {
+            window.SchoolyClasses.stopLiveSync();
+          }
+          if (location.pathname.endsWith('app.html')) {
+            location.replace('login.html');
+          }
         }
         resolveReady(user || null);
       });

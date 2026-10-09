@@ -87,6 +87,10 @@
           "type": "array",
           "description": "Class subjects and categories"
         },
+        "schedule": {
+          "type": "array",
+          "description": "Weekly timetable lessons for this class"
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",
