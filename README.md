@@ -8,6 +8,9 @@ Folge **[FIREBASE_SETUP.md](FIREBASE_SETUP.md)**. Ohne deine Firebase-Web-App-Ko
 ## Starten
 Schooly auf einem HTTPS-fähigen statischen Host bereitstellen. `index.html` ist die öffentliche Startseite, `login.html` enthält Login/Registrierung, und `app.html` ist die geschützte App. Firebase autorisierte Domains müssen passend konfiguriert sein.
 
+## Tests
+`npm test` führt Smoke-Tests für die Startseite, die App-Grundstruktur und die Anmeldung mit jsdom aus. GitHub Actions prüft diese Tests sowie die Syntax aller versionierten JavaScript-Dateien bei jedem Push und Pull Request.
+
 ## Funktionen
 - Dashboard mit Statistiken, „Als Nächstes fällig“ und „Zuletzt hinzugefügt“
 - Hausaufgaben: erstellen, bearbeiten, löschen, erledigen, suchen, filtern, sortieren, Listen- und Kartenansicht
