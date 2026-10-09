@@ -1,0 +1,3 @@
+/* Firebase Console -> Projekteinstellungen -> Allgemein -> Web-App. Keine Admin-/Service-Account-Schlüssel hier eintragen. */
+window.SCHOOLY_FIREBASE_CONFIG={apiKey:"DEINE_FIREBASE_API_KEY",authDomain:"DEINE_PROJECT_ID.firebaseapp.com",projectId:"DEINE_PROJECT_ID",storageBucket:"DEINE_PROJECT_ID.appspot.com",messagingSenderId:"DEINE_MESSAGING_SENDER_ID",appId:"DEINE_FIREBASE_APP_ID"};
+window.SCHOOLY_FIREBASE_READY=!Object.values(window.SCHOOLY_FIREBASE_CONFIG).some(v=>String(v).includes("DEINE_"));

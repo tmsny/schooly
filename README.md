@@ -1,9 +1,12 @@
-# Hausaufgaben-Manager!
+# Schooly
 
-Minimalistische Schwarz-Weiß-Web-App für Hausaufgaben, Prüfungen und Referate. Kein Backend, kein Login, keine Abhängigkeiten.
+Schooly ist eine Web-App, die Hausaufgaben, Prüfungen, Termine und gemeinsame Klassen organisiert. Die App verwendet Firebase Authentication für Konten und Firestore für private Daten und Klassenzugänge.
+
+## Firebase einrichten
+Folge **[FIREBASE_SETUP.md](FIREBASE_SETUP.md)**. Ohne deine Firebase-Web-App-Konfiguration in `js/firebase-config.js` bleiben Anmeldung und Cloud-Funktionen deaktiviert. Die öffentliche Startseite funktioniert auch ohne Firebase-Konfiguration.
 
 ## Starten
-`index.html` im Browser öffnen. Ein Server ist nicht nötig. Für Hosting reicht jeder statische Webspace.
+Schooly auf einem HTTPS-fähigen statischen Host bereitstellen. `index.html` ist die öffentliche Startseite, `login.html` enthält Login/Registrierung, und `app.html` ist die geschützte App. Firebase autorisierte Domains müssen passend konfiguriert sein.
 
 ## Funktionen
 - Dashboard mit Statistiken, „Als Nächstes fällig“ und „Zuletzt hinzugefügt“
@@ -13,7 +16,7 @@ Minimalistische Schwarz-Weiß-Web-App für Hausaufgaben, Prüfungen und Referate
 - Einstellungen: Wochenbeginn, Standardansicht, Standardfächer, JSON-Sicherung (Export/Import), CSV-Export, Demo-Modus, Zurücksetzen
 
 ## Speicherung
-Alles liegt im LocalStorage (Schlüssel `hm.v1`), nur in diesem Browser auf diesem Gerät. Es gibt keine Synchronisierung. Exportiere regelmäßig eine JSON-Sicherung. Ungültige Daten werden unter `hm.v1.corrupt` gesichert und die App startet neu.
+Aufgaben und Einstellungen werden weiterhin lokal unter `hm.v1` zwischengespeichert und nach erfolgreicher Firebase-Anmeldung in den privaten Firestore-Bereich des Kontos synchronisiert. Beim ersten Login wird der vorhandene lokale Bestand übernommen, falls es noch keine Cloud-Sicherung gibt. Exportiere trotzdem regelmäßig eine JSON-Sicherung. Ungültige Daten werden unter `hm.v1.corrupt` gesichert und die App startet neu.
 
 ## Struktur
 | Datei | Aufgabe |

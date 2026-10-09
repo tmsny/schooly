@@ -62,16 +62,18 @@
       '<section><div class="sec"><h2>Zuletzt hinzugefügt</h2></div>' + list(recent, 'Noch keine Aufgaben angelegt.') + '</section></div></div>';
   }
 
-  const NAV = [['dashboard', 'Übersicht', 'home'], ['homework', 'Aufgaben', 'list'], ['calendar', 'Kalender', 'calendar'], ['subjects', 'Fächer', 'users'], ['settings', 'Einstellungen', 'settings']];
+  const NAV = [['dashboard', 'Übersicht', 'home'], ['homework', 'Aufgaben', 'list'], ['calendar', 'Kalender', 'calendar'], ['subjects', 'Fächer', 'users'], ['classes', 'Meine Klassen', 'users'], ['settings', 'Einstellungen', 'settings']];
   const ROUTES = {
     dashboard, homework: HM.Homework.render, calendar: HM.Cal.render, settings: HM.Settings.render,
-    subjects: () => '<div class="head"><h1>Fächer &amp; Lehrer</h1></div><div class="grid2">' + HM.Subjects.render() + HM.Teachers.render() + '</div>'
+    subjects: () => '<div class="head"><h1>Fächer &amp; Lehrer</h1></div><div class="grid2">' + HM.Subjects.render() + HM.Teachers.render() + '</div>',
+    classes: () => '<div class="head"><div><h1>Meine Klassen</h1><p class="mute">Lerne und organisiere gemeinsam mit deiner Klasse.</p></div></div><div id="class-view" class="stack"><p>Deine Klassen werden geladen …</p></div>'
   };
   HM.render = function () {
     const key = ROUTES[location.hash.replace(/^#\//, '')] ? location.hash.replace(/^#\//, '') : 'dashboard';
     document.getElementById('view').innerHTML = ROUTES[key]();
     document.getElementById('nav').innerHTML = '<div class="brand">Hausaufgaben</div>' + NAV.map(([k, l, i]) => '<a href="#/' + k + '"' + (k === key ? ' aria-current="page"' : '') + '>' + U.icon(i) + '<span>' + l + '</span></a>').join('');
-    document.title = NAV.find((n) => n[0] === key)[1] + ' · Hausaufgaben';
+    document.title = NAV.find((n) => n[0] === key)[1] + ' · Schooly';
+    if (key === 'classes' && window.SchoolyClasses) window.SchoolyClasses.render();
   };
 
   document.addEventListener('click', (e) => { const el = e.target.closest('[data-action]'); if (el && A[el.dataset.action]) A[el.dataset.action](el, e); });
@@ -87,4 +89,10 @@
 
   HM.load();
   HM.render();
+  const accountLabel = document.getElementById('account-label');
+  const signOut = document.getElementById('sign-out');
+  if (signOut) signOut.addEventListener('click', async () => { if (window.SchoolyAuth) await SchoolyAuth.logout(); });
+  if (window.SchoolyAuth) SchoolyAuth.ready.then(user => {
+    if (accountLabel && user) accountLabel.textContent = user.displayName || user.email || 'Angemeldet';
+  });
 })();
