@@ -71,9 +71,22 @@
   }
   HM.sanitize = sanitize; HM.fresh = fresh;
 
-  HM.save = function () {
+  HM.saveLocalOnly = function () {
     try { localStorage.setItem(KEY, JSON.stringify(HM.state)); return true; }
     catch (e) { U.toast('Speichern fehlgeschlagen. Der Browser-Speicher ist voll oder blockiert.', true); return false; }
+  };
+  let cloudTimer = null;
+  HM.save = function () {
+    const ok = HM.saveLocalOnly();
+    if (ok && HM.cloudLoaded && window.SchoolyAuth && SchoolyAuth.user && SchoolyAuth.db) {
+      clearTimeout(cloudTimer);
+      cloudTimer = setTimeout(async () => {
+        try {
+          await SchoolyAuth.db.collection('users').doc(SchoolyAuth.user.uid).collection('private').doc('main').set({state: HM.state, schemaVersion: 1, updatedAt: firebase.firestore.FieldValue.serverTimestamp()});
+        } catch (e) { console.error('Schooly Cloud-Speicherung fehlgeschlagen', e); U.toast('Cloud-Speicherung fehlgeschlagen. Deine Daten bleiben vorerst auf diesem Gerät.', true); }
+      }, 450);
+    }
+    return ok;
   };
   HM.load = function () {
     let raw = null;
@@ -87,7 +100,8 @@
       }
     }
     HM.state = st || fresh();
-    if (!st) HM.save();
+    HM.cloudLoaded = false;
+    if (!st) HM.saveLocalOnly();
   };
   HM.reset = function () { HM.state = fresh(); return HM.save(); };
 
