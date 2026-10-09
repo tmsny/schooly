@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Schooly Dashboard – Hausaufgaben, Prüfungen, Fächer und Klassen verwalten.">
+<title>Schooly · Übersicht</title>
+<link rel="icon" type="image/svg+xml" href="src/icons/schooly_icon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+<a class="skip" href="#view">Zum Inhalt springen</a>
+<div class="shell">
+  <nav id="nav" aria-label="Hauptnavigation"></nav>
+  <main id="view" tabindex="-1"></main>
+</div>
+<dialog id="dlg" aria-labelledby="dlg-title"></dialog>
+<div id="toasts" role="status" aria-live="polite"></div>
+<div class="app-account"><span id="account-label"></span><button id="sign-out" class="btn ghost sm" type="button">Abmelden</button></div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/firebase-auth.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/subjects.js"></script>
+<script src="js/teachers.js"></script>
+<script src="js/homework.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/classes.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/classsystem.js"></script>
+<script src="js/app.js"></script>
+<script>
+(function(){if(window.SchoolyAuth){SchoolyAuth.ready.then(function(user){if(user){var el=document.getElementById("account-label");if(el)el.textContent=user.displayName||user.email||"Angemeldet";}});var b=document.getElementById("sign-out");if(b)b.addEventListener("click",function(){SchoolyAuth.logout();});}})();
+</script>
+</body>
+</html>

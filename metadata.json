@@ -1,0 +1,8 @@
+{
+  "name": "Schooly",
+  "description": "Schulplaner für Hausaufgaben, Prüfungen, Fächer und Klassen.",
+  "prompt": "Schooly – Schule einfach organisiert",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

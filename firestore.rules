@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signedIn() {
+    return request.auth != null;
+  }
+
+  function getClass(classId) {
+    return get(/databases/$(database)/documents/classes/$(classId)).data;
+  }
+
+  function isMemberOfClass(classId) {
+    return signedIn() && request.auth.uid in getClass(classId).memberIds;
+  }
+
+  function isAdminOfClass(classId) {
+    return signedIn() && (request.auth.uid == getClass(classId).ownerId || request.auth.uid in getClass(classId).adminIds);
+  }
+
+  match /users/{uid}/private/{doc} {
+    allow read, delete: if signedIn() && request.auth.uid == uid;
+    allow create, update: if signedIn() && request.auth.uid == uid && doc == 'main';
+  }
+
+  match /classDirectory/{code} {
+    allow get: if signedIn();
+    allow list: if false;
+    allow create: if signedIn() && code.matches('^[A-HJ-NP-Z2-9]{8}$');
+    allow update, delete: if false;
+  }
+
+  match /classes/{id} {
+    allow get, list: if signedIn() && request.auth.uid in resource.data.memberIds;
+    allow create: if signedIn()
+      && request.resource.data.ownerId == request.auth.uid
+      && request.auth.uid in request.resource.data.adminIds
+      && request.auth.uid in request.resource.data.memberIds;
+    allow update: if signedIn() && (
+      request.auth.uid == resource.data.ownerId ||
+      request.auth.uid in resource.data.adminIds ||
+      request.auth.uid in request.resource.data.memberIds ||
+      (request.auth.uid in resource.data.memberIds && !(request.auth.uid in request.resource.data.memberIds))
+    );
+    allow delete: if signedIn() && request.auth.uid == resource.data.ownerId;
+
+    match /tasks/{taskId} {
+      allow get, list: if isMemberOfClass(id);
+      allow create: if isMemberOfClass(id);
+      allow update: if isMemberOfClass(id);
+      allow delete: if isMemberOfClass(id) && (isAdminOfClass(id) || request.auth.uid == resource.data.creatorId);
+    }
+
+    match /folders/{folderId} {
+      allow get, list: if isMemberOfClass(id);
+      allow create: if isMemberOfClass(id);
+      allow update: if isMemberOfClass(id);
+      allow delete: if isMemberOfClass(id) && (isAdminOfClass(id) || request.auth.uid == resource.data.creatorId);
+    }
+  }
+ }
+}
