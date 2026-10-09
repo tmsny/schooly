@@ -1,4 +1,4 @@
-# Hausaufgaben-Manager
+# Hausaufgaben-Manager!
 
 Minimalistische Schwarz-Weiß-Web-App für Hausaufgaben, Prüfungen und Referate. Kein Backend, kein Login, keine Abhängigkeiten.
 
