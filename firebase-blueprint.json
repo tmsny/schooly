@@ -1,0 +1,229 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User private app state including homework, subjects, and settings",
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "object",
+          "description": "JSON representation of Schooly local state"
+        },
+        "schemaVersion": {
+          "type": "number",
+          "description": "State schema version"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last updated timestamp"
+        }
+      },
+      "required": ["state", "schemaVersion"]
+    },
+    "ClassDirectoryEntry": {
+      "title": "ClassDirectoryEntry",
+      "description": "Directory lookup for class codes",
+      "type": "object",
+      "properties": {
+        "classId": {
+          "type": "string",
+          "description": "The associated class document ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the class",
+          "minLength": 2,
+          "maxLength": 70
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["classId", "name"]
+    },
+    "SchoolClass": {
+      "title": "SchoolClass",
+      "description": "Shared school class with roles, members, and subjects",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Class display name",
+          "minLength": 2,
+          "maxLength": 70
+        },
+        "description": {
+          "type": "string",
+          "description": "Class description"
+        },
+        "code": {
+          "type": "string",
+          "description": "8-character alphanumeric class code"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "User ID of class owner/creator"
+        },
+        "ownerName": {
+          "type": "string",
+          "description": "Display name of class owner"
+        },
+        "adminIds": {
+          "type": "array",
+          "description": "List of user IDs with admin permissions"
+        },
+        "memberIds": {
+          "type": "array",
+          "description": "List of user IDs who are members"
+        },
+        "members": {
+          "type": "array",
+          "description": "Detailed member list with roles (admin, student)"
+        },
+        "subjects": {
+          "type": "array",
+          "description": "Class subjects and categories"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when class was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["name", "code", "ownerId", "adminIds", "memberIds"]
+    },
+    "ClassTask": {
+      "title": "ClassTask",
+      "description": "Shared task/homework inside a class with assigned students and solution images",
+      "type": "object",
+      "properties": {
+        "classId": {
+          "type": "string",
+          "description": "ID of parent class"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the task",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed task description"
+        },
+        "subject": {
+          "type": "string",
+          "description": "Associated subject"
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Due date formatted YYYY-MM-DD"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["niedrig", "normal", "hoch"],
+          "description": "Priority level"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["offen", "erledigt"],
+          "description": "Completion status"
+        },
+        "creatorId": {
+          "type": "string",
+          "description": "User ID of task author"
+        },
+        "creatorName": {
+          "type": "string",
+          "description": "Display name of task author"
+        },
+        "assignedStudentIds": {
+          "type": "array",
+          "description": "Student IDs assigned to this task"
+        },
+        "assignedStudentNames": {
+          "type": "array",
+          "description": "Student names assigned to this task"
+        },
+        "images": {
+          "type": "array",
+          "description": "Uploaded solution/material images"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["classId", "title", "creatorId"]
+    },
+    "ClassFolder": {
+      "title": "ClassFolder",
+      "description": "Subject folders and subcategories for learning materials and solutions",
+      "type": "object",
+      "properties": {
+        "classId": {
+          "type": "string",
+          "description": "ID of parent class"
+        },
+        "name": {
+          "type": "string",
+          "description": "Folder or category name"
+        },
+        "parentId": {
+          "type": "string",
+          "description": "Parent folder ID for nested subcategories"
+        },
+        "subject": {
+          "type": "string",
+          "description": "Associated subject"
+        },
+        "items": {
+          "type": "array",
+          "description": "Files, images, and solutions inside the folder"
+        },
+        "creatorId": {
+          "type": "string",
+          "description": "User ID of creator"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["classId", "name", "creatorId"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}/private/{doc}": {
+      "schema": "UserProfile",
+      "description": "Private state document for user"
+    },
+    "/classDirectory/{code}": {
+      "schema": "ClassDirectoryEntry",
+      "description": "Public directory mapping code to class ID"
+    },
+    "/classes/{classId}": {
+      "schema": "SchoolClass",
+      "description": "School class collection with roles and members"
+    },
+    "/classes/{classId}/tasks/{taskId}": {
+      "schema": "ClassTask",
+      "description": "Class tasks and assignments subcollection"
+    },
+    "/classes/{classId}/folders/{folderId}": {
+      "schema": "ClassFolder",
+      "description": "Class folders and materials subcollection"
+    }
+  }
+}

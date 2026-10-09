@@ -71,7 +71,7 @@
   HM.render = function () {
     const key = ROUTES[location.hash.replace(/^#\//, '')] ? location.hash.replace(/^#\//, '') : 'dashboard';
     document.getElementById('view').innerHTML = ROUTES[key]();
-    document.getElementById('nav').innerHTML = '<div class="brand">Hausaufgaben</div>' + NAV.map(([k, l, i]) => '<a href="#/' + k + '"' + (k === key ? ' aria-current="page"' : '') + '>' + U.icon(i) + '<span>' + l + '</span></a>').join('');
+    document.getElementById('nav').innerHTML = '<div class="brand"><img class="brand-logo" src="src/icons/schooly_icon.svg" alt="Schooly"><span>Schooly</span></div>' + NAV.map(([k, l, i]) => '<a href="#/' + k + '"' + (k === key ? ' aria-current="page"' : '') + '>' + U.icon(i) + '<span>' + l + '</span></a>').join('');
     document.title = NAV.find((n) => n[0] === key)[1] + ' · Schooly';
     if (key === 'classes' && window.SchoolyClasses) window.SchoolyClasses.render();
   };

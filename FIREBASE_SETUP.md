@@ -1,10 +1,22 @@
 # Schooly Firebase Setup
 
-1. Erstelle ein Projekt unter https://console.firebase.google.com/ und füge eine Web-App hinzu.
-2. Kopiere die Web-Konfiguration nach `js/firebase-config.js` und ersetze alle `DEINE_...`-Platzhalter. Keine Service-Account-/Admin-Schlüssel in den Browsercode legen.
-3. Authentication → Sign-in method: E-Mail/Passwort und Google aktivieren.
-4. Authentication → Settings → Authorized domains: deine Hosting-Domain hinzufügen.
-5. Firestore Database erstellen und die Regeln aus `firestore.rules` veröffentlichen.
-6. Lade die Dateien auf einen HTTPS-fähigen statischen Host. `index.html` ist die Startseite, `login.html` der Login, `app.html` die App.
+## Aktueller Status
+Das Firebase-Projekt wurde über AI Studio bereitgestellt:
+- **Projekt-ID**: `agile-curve-0t8c4`
+- **Firestore-Datenbank**: Bereitgestellt und mit Sicherheitsregeln (`firestore.rules`) synchronisiert
+- **Web-Konfiguration**: Automatisch in `js/firebase-config.js` und `firebase-applet-config.json` hinterlegt
 
-Enthalten: Google-Popup-Login, E-Mail-Registrierung/Login, Passwort-zurücksetzen, persönliche Daten in Firestore sowie Klassen mit 8-stelligem Code. Beim ersten Login werden lokale Daten nur dann in die Cloud übernommen, wenn für dieses Konto noch keine Cloud-Daten existieren. Firebase-Platzhalter müssen ersetzt sein, sonst funktionieren Auth und Synchronisierung nicht. Prüfe Datenschutz/Nutzungsbedingungen und erwäge Firebase App Check vor öffentlichem Start.
+## Was in der Firebase Console aktiviert werden muss (einmalig):
+Öffne [https://console.firebase.google.com/project/agile-curve-0t8c4/authentication](https://console.firebase.google.com/project/agile-curve-0t8c4/authentication):
+
+1. **Anmeldemethoden aktivieren (Sign-in method)**:
+   - **E-Mail/Passwort**: Auf *Aktivieren* stellen und speichern.
+   - **Google**: Auf *Aktivieren* stellen, Support-E-Mail wählen und speichern.
+2. **Autorisierte Domains (Settings → Authorized domains)**:
+   - Füge die AI Studio App-Domains hinzu (z. B. `europe-west2.run.app` bzw. die vollständige Host-Domain der App), falls noch nicht gelistet.
+
+## Collaborator / Teammitglieder einladen
+Um weitere Personen zum Firebase-Projekt einzuladen:
+1. Öffne die [Firebase Console Projekteinstellungen](https://console.firebase.google.com/project/agile-curve-0t8c4/settings/iam).
+2. Gehe auf den Reiter **Nutzer und Berechtigungen** (Users and permissions).
+3. Klicke auf **Mitglied hinzufügen** (Add member) und gib die E-Mail-Adresse sowie die Rolle (z. B. Editor / Bearbeiter) ein.
