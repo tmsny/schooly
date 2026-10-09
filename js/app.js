@@ -39,7 +39,7 @@
         pending = res;
         UI.open(o.title || 'Bestätigen',
           '<p>' + E(msg) + '</p>' + (o.typed ? '<div class="fld"><label for="cf-typed">Tippe „' + E(o.typed) + '“ zur Bestätigung</label><input id="cf-typed" autocomplete="off"></div>' : '') +
-          '<div class="dlg-f"><button class="btn ghost" data-action="dlg-close">Abbrechen</button><button class="btn" id="cf-yes" data-action="cf-yes"' + (o.typed ? ' disabled' : '') + '>' + E(o.label || 'Bestätigen') + '</button></div>');
+          '<div class="dlg-f"><button class="btn ghost" data-action="dlg-close">' + E(o.cancelLabel || 'Abbrechen') + '</button><button class="btn" id="cf-yes" data-action="cf-yes"' + (o.typed ? ' disabled' : '') + '>' + E(o.label || 'Bestätigen') + '</button></div>');
         if (o.typed) dlg.querySelector('#cf-typed').addEventListener('input', (e) => { dlg.querySelector('#cf-yes').disabled = e.target.value.trim() !== o.typed; });
       });
     }
@@ -50,7 +50,7 @@
   A['cf-yes'] = () => { const r = pending; pending = null; if (r) r(true); UI.close(); };
 
   function dashboard() {
-    const hw = HM.state.homework, t = U.today(), open = hw.filter((h) => !h.done);
+    const hw = HM.Homework.allForCalendar(), t = U.today(), open = hw.filter((h) => !h.done);
     const stats = [['Offen', open.length, 1], ['Heute fällig', open.filter((h) => h.due === t).length], ['Überfällig', open.filter((h) => h.due && h.due < t).length], ['Erledigt', hw.length - open.length]];
     const hr = new Date().getHours(), greet = hr < 11 ? 'Guten Morgen' : hr < 18 ? 'Guten Tag' : 'Guten Abend';
     const next = open.slice().sort((a, b) => (a.due || '9').localeCompare(b.due || '9')).slice(0, 5);
@@ -62,12 +62,18 @@
       '<section><div class="sec"><h2>Zuletzt hinzugefügt</h2></div>' + list(recent, 'Noch keine Aufgaben angelegt.') + '</section></div></div>';
   }
 
-  const NAV = [['dashboard', 'Übersicht', 'home'], ['homework', 'Aufgaben', 'list'], ['calendar', 'Kalender', 'calendar'], ['subjects', 'Fächer', 'users'], ['settings', 'Einstellungen', 'settings']];
+  const NAV = [['dashboard', 'Übersicht', 'home'], ['homework', 'Aufgaben', 'list'], ['schedule', 'Stundenplan', 'calendar'], ['calendar', 'Kalender', 'calendar'], ['subjects', 'Fächer', 'users'], ['classes', 'Klassen', 'users'], ['settings', 'Einstellungen', 'settings']];
   const ROUTES = {
-    dashboard, homework: HM.Homework.render, calendar: HM.Cal.render, settings: HM.Settings.render,
+    dashboard, homework: HM.Homework.render, schedule: HM.Schedule.render, calendar: HM.Cal.render, classes: HM.ClassSystem.render, settings: HM.Settings.render,
     subjects: () => '<div class="head"><h1>Fächer &amp; Lehrer</h1></div><div class="grid2">' + HM.Subjects.render() + HM.Teachers.render() + '</div>'
   };
   HM.render = function () {
+    if (!HM.ClassSystem.isLoggedIn()) {
+      document.getElementById('view').innerHTML = HM.ClassSystem.renderLogin();
+      document.getElementById('nav').innerHTML = '';
+      document.title = 'Anmelden · Hausaufgaben';
+      return;
+    }
     const key = ROUTES[location.hash.replace(/^#\//, '')] ? location.hash.replace(/^#\//, '') : 'dashboard';
     document.getElementById('view').innerHTML = ROUTES[key]();
     document.getElementById('nav').innerHTML = '<div class="brand">Hausaufgaben</div>' + NAV.map(([k, l, i]) => '<a href="#/' + k + '"' + (k === key ? ' aria-current="page"' : '') + '>' + U.icon(i) + '<span>' + l + '</span></a>').join('');
@@ -86,5 +92,6 @@
   window.addEventListener('hashchange', () => { HM.render(); window.scrollTo(0, 0); });
 
   HM.load();
+  HM.ClassSystem.reconcile();
   HM.render();
 })();

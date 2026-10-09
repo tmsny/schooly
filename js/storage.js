@@ -50,7 +50,7 @@
     return {
       version: 1,
       subjects: DEFAULTS.map(([name, abbr]) => ({ id: U.uid('s'), name, abbr, description: '' })),
-      teachers: [], homework: [], settings: { weekStart: 1, view: 'list' }
+      teachers: [], homework: [], schedule: [], settings: { weekStart: 1, view: 'list' }
     };
   }
   function sanitize(raw) {
@@ -63,7 +63,14 @@
       id: h.id, subjectId: h.subjectId || null, subjectName: str(h.subjectName, 80), teacherId: h.teacherId || null, teacherName: str(h.teacherName, 80),
       title: str(h.title, 140).trim() || 'Ohne Titel', description: str(h.description), type: TYPES.includes(h.type) ? h.type : 'Hausaufgabe',
       assigned: U.parse(h.assigned) ? h.assigned : '', due: U.parse(h.due) ? h.due : '', priority: PRIOS.includes(h.priority) ? h.priority : 'normal',
-      done: !!h.done, notes: str(h.notes), link: str(h.link, 500), created: Number(h.created) || Date.now(), demo: !!h.demo
+      done: !!h.done, notes: str(h.notes), link: str(h.link, 500), created: Number(h.created) || Date.now(), demo: !!h.demo,
+      classTaskId: typeof h.classTaskId === 'string' ? h.classTaskId : ''
+    }));
+    st.schedule = arr(raw.schedule).map((x) => ({
+      id: x.id, day: Math.max(1, Math.min(5, Number(x.day) || 1)),
+      start: /^\d{2}:\d{2}$/.test(x.start) ? x.start : '08:00',
+      end: /^\d{2}:\d{2}$/.test(x.end) ? x.end : '09:00', sourceClassId: typeof x.sourceClassId === 'string' ? x.sourceClassId : '',
+      subject: str(x.subject, 80).trim() || 'Unbenannt', teacher: str(x.teacher, 80)
     }));
     const s = raw.settings || {};
     st.settings = { weekStart: s.weekStart === 0 ? 0 : 1, view: s.view === 'cards' ? 'cards' : 'list' };

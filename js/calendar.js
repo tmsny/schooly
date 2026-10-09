@@ -6,8 +6,8 @@
   const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
   const DOW = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
-  const byDay = (iso) => HM.state.homework.filter((h) => h.due === iso).sort((a, b) => a.done - b.done || a.title.localeCompare(b.title, 'de'));
-  const tasks = (l, empty) => (l.length ? '<div class="list">' + l.map(HM.Homework.item).join('') + '</div>' : '<p class="mute small">' + empty + '</p>');
+  const byDay = (iso) => HM.Homework.allForCalendar().filter((h) => h.due === iso).sort((a, b) => a.done - b.done || a.title.localeCompare(b.title, 'de'));
+  const tasks = (l, empty) => (l.length ? '<div class="list">' + l.map((h) => h.classTaskId ? HM.Homework.classItem(h) : HM.Homework.item(h)).join('') + '</div>' : '<p class="mute small">' + empty + '</p>');
 
   function month() {
     const ws = HM.state.settings.weekStart, first = new Date(C.y, C.m, 1), today = U.today();

@@ -31,9 +31,9 @@
       '<button class="icon-btn" data-action="hw-del" data-id="' + E(h.id) + '" aria-label="Löschen">' + U.icon('trash') + '</button></div></article>';
   };
 
-  H.filtered = function () {
+  H.filtered = function (items) {
     const today = U.today(), q = flt.q.trim().toLowerCase(), end = U.addDays(today, 6);
-    let l = HM.state.homework.filter((h) => {
+    let l = (items || HM.state.homework).filter((h) => {
       if (q && ![h.title, h.description, H.teacherName(h), H.subjectName(h)].some((x) => String(x).toLowerCase().includes(q))) return false;
       if (flt.subject && h.subjectId !== flt.subject) return false;
       if (flt.status === 'open' && h.done) return false;
@@ -53,15 +53,45 @@
     }[flt.sort];
     return l.sort(cmp);
   };
+  H.classTaskRecords = function () {
+    const userId = HM.ClassSystem.currentUserId();
+    return HM.ClassSystem.classes().flatMap((cls) => cls.homework.map((task) => Object.assign({}, task, {
+      classTaskId: task.id, classId: cls.id, className: cls.name,
+      subjectId: (HM.state.subjects.find((s) => s.name.toLowerCase() === String(task.subject || '').toLowerCase()) || {}).id || null,
+      subjectName: task.subject,
+      teacherId: null, teacherName: task.teacher || '', type: task.type || 'Hausaufgabe', assigned: '',
+      priority: task.priority || 'normal', due: task.due, done: Array.isArray(task.doneBy) && task.doneBy.includes(userId), notes: '', link: task.link || ''
+    })));
+  };
+  H.allForCalendar = function () {
+    return HM.state.homework.filter((h) => !h.classTaskId).concat(H.classTaskRecords());
+  };
+  H.classItem = function (task) {
+    const st = H.status(task);
+    const canDelete = HM.ClassSystem.canManage(HM.ClassSystem.getClass(task.classId)) || task.createdBy === HM.ClassSystem.currentUserId();
+    const actions = canDelete
+      ? '<button class="icon-btn" data-action="class-task-edit" data-id="' + E(task.classTaskId) + '" data-class-id="' + E(task.classId) + '" aria-label="Klassenaufgabe ' + E(task.title) + ' bearbeiten">' + U.icon('edit') + '</button><button class="icon-btn" data-action="class-task-del" data-id="' + E(task.classTaskId) + '" data-class-id="' + E(task.classId) + '" aria-label="Klassenaufgabe ' + E(task.title) + ' löschen">' + U.icon('trash') + '</button>'
+      : '<span class="small mute">' + (HM.ClassSystem.canManage(HM.ClassSystem.getClass(task.classId)) ? 'Klassenaufgabe' : 'Für dich') + '</span>';
+    return '<article class="hw class-task' + (task.done ? ' done' : '') + '">' +
+      '<button class="chk" data-action="class-task-toggle" data-id="' + E(task.classTaskId) + '" data-class-id="' + E(task.classId) + '" aria-pressed="' + task.done + '" aria-label="' + E(task.title) + ' als ' + (task.done ? 'offen' : 'erledigt') + ' markieren">' + U.icon('check') + '</button>' +
+      '<div><b class="task-title">' + E(task.title) + '</b><div class="meta"><span>' + E(task.subject || 'Ohne Fach') + '</span><span class="tag">Klasse · ' + E(task.className) + '</span>' + (task.type !== 'Hausaufgabe' ? '<span class="tag">' + E(task.type) + '</span>' : '') + (task.teacherName ? '<span>' + E(task.teacherName) + '</span>' : '') + '<span class="tag ' + st + '">' + (task.due ? E(dueLabel(task)) : 'Ohne Datum') + '</span>' + (task.priority === 'hoch' && !task.done ? '<span class="tag high">Hohe Priorität</span>' : '') + '</div>' +
+      (task.description ? '<p class="small">' + E(task.description) + '</p>' : '') + '</div><div class="acts">' + actions + '</div></article>';
+  };
 
   function results() {
-    const l = H.filtered(), total = HM.state.homework.length;
-    if (!l.length) {
-      return total
-        ? '<div class="empty"><b>Keine Treffer</b>Passe Suche oder Filter an.</div>'
-        : '<div class="empty"><b>Noch keine Hausaufgaben</b>Trage deine erste Aufgabe ein, um den Überblick zu behalten.<br><button class="btn" data-action="hw-new">' + U.icon('plus') + 'Hausaufgabe hinzufügen</button></div>';
-    }
-    return '<p class="small mute" style="margin-bottom:8px">' + l.length + (l.length === 1 ? ' Aufgabe' : ' Aufgaben') + '</p><div class="list' + (HM.state.settings.view === 'cards' ? ' cards' : '') + '">' + l.map(H.item).join('') + '</div>';
+    const mine = H.filtered(HM.state.homework.filter((h) => !h.classTaskId));
+    const classes = HM.ClassSystem.classes();
+    const mineSection = '<section class="task-group"><div class="task-group-head"><div><h2>Meine Aufgaben</h2><p class="small mute">Nur für dich sichtbar</p></div><span class="tag">' + mine.length + '</span></div>' +
+      (mine.length ? '<div class="list' + (HM.state.settings.view === 'cards' ? ' cards' : '') + '">' + mine.map(H.item).join('') + '</div>' : '<div class="empty compact-empty"><b>Noch keine persönlichen Aufgaben</b>Aufgaben für dich selbst erscheinen hier.</div>') + '</section>';
+    const classSections = classes.map((cls) => {
+      const records = HM.Homework.classTaskRecords().filter((task) => task.classId === cls.id);
+      const list = H.filtered(records);
+      const rows = list.map(H.classItem).join('');
+      return '<section class="task-group"><div class="task-group-head"><div><h2>' + E(cls.name) + '</h2><p class="small mute">Aufgaben für alle in dieser Klasse</p></div><span class="tag">' + list.length + '</span></div>' +
+        (rows ? '<div class="list' + (HM.state.settings.view === 'cards' ? ' cards' : '') + '">' + rows + '</div>' : '<div class="empty compact-empty"><b>Keine Klassenaufgaben</b>Hier erscheinen Aufgaben, die für alle in ' + E(cls.name) + ' erstellt wurden.</div>') + '</section>';
+    }).join('');
+    const allEmpty = mine.length === 0 && classes.every((cls) => cls.homework.length === 0);
+    return allEmpty ? '<div class="empty"><b>Noch keine Aufgaben</b>Erstelle eine persönliche Aufgabe oder wähle beim Anlegen eine Klasse.<br><button class="btn" data-action="hw-new">' + U.icon('plus') + 'Aufgabe hinzufügen</button></div>' : '<div class="task-groups">' + mineSection + classSections + '</div>';
   }
   H.refresh = () => { const el = document.getElementById('hw-results'); if (el) el.innerHTML = results(); };
 
@@ -83,8 +113,10 @@
     const h = HM.state.homework.find((x) => x.id === id) || Object.assign({ subjectId: '', teacherId: '', title: '', description: '', type: 'Hausaufgabe', assigned: U.today(), due: '', priority: 'normal', notes: '', link: '' }, preset);
     const so = [['', 'Fach wählen …']].concat(HM.state.subjects.map((s) => [s.id, s.name]));
     const to = [['', '— kein Lehrer —']].concat(HM.state.teachers.map((t) => [t.id, t.name]));
+    const shareOptions = [['personal', 'Nur für mich']].concat(HM.ClassSystem.classes().filter((c) => HM.ClassSystem.canManage(c)).map((c) => ['class:' + c.id, 'Für die ganze Klasse · ' + c.name]));
     HM.UI.open(id ? 'Aufgabe bearbeiten' : 'Neue Hausaufgabe',
       '<form class="form" data-form="hw-save" novalidate><input type="hidden" name="id" value="' + E(id || '') + '">' +
+      (!id ? HM.UI.fld('Für wen ist die Aufgabe?', 'scope', 'select', 'personal', { options: shareOptions }) : '') +
       '<div class="row2">' + HM.UI.fld('Fach', 'subjectId', 'select', h.subjectId, { required: 1, options: so }) + HM.UI.fld('Aufgabentyp', 'type', 'select', h.type, { options: HM.TYPES.map((x) => [x, x]) }) + '</div>' +
       HM.UI.fld('Titel / Thema', 'title', 'text', h.title, { required: 1, max: 140 }) +
       HM.UI.fld('Beschreibung', 'description', 'textarea', h.description, { rows: 3 }) +
@@ -105,6 +137,18 @@
     else if (g('assigned') && U.parse(g('assigned')) && g('due') < g('assigned')) errs.due = 'Das Fälligkeitsdatum liegt vor dem Aufgabedatum.';
     if (HM.UI.errors(f, errs)) return;
     const data = { subjectId: g('subjectId'), teacherId: g('teacherId') || null, title: g('title'), description: g('description'), type: g('type'), assigned: g('assigned'), due: g('due'), priority: g('priority'), notes: g('notes'), link: g('link'), subjectName: '', teacherName: '' };
+    const scope = g('scope');
+    if (!id && scope.indexOf('class:') === 0) {
+      const cls = HM.ClassSystem.getClass(scope.slice(6));
+      if (!cls || !HM.ClassSystem.canManage(cls)) return U.toast('Du darfst in dieser Klasse keine Aufgaben erstellen.', true);
+      const subject = HM.state.subjects.find((s) => s.id === data.subjectId);
+      const teacher = HM.state.teachers.find((t) => t.id === data.teacherId);
+      cls.homework.push({ id: U.uid('chtask'), title: data.title, subject: subject ? subject.name : '', due: data.due, description: data.description,
+        createdBy: HM.ClassSystem.currentUserId(), created: Date.now(), type: data.type, priority: data.priority,
+        teacher: teacher ? teacher.name : '', link: data.link, doneBy: [] });
+      if (HM.ClassSystem.save()) { HM.UI.close(); HM.render(); U.toast('Aufgabe für ' + cls.name + ' erstellt'); }
+      return;
+    }
     const ex = HM.state.homework.find((h) => h.id === id);
     if (ex) Object.assign(ex, data); else HM.state.homework.push(Object.assign({ id: U.uid('h'), done: false, created: Date.now(), demo: false }, data));
     if (HM.save()) U.toast(ex ? 'Änderungen gespeichert' : 'Hausaufgabe hinzugefügt');
