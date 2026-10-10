@@ -85,6 +85,53 @@ textarea{min-height:84px;resize:vertical}
 .member-list{display:grid}.member-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.member-row:last-child{border:0}.member-avatar{width:34px;height:34px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-weight:700;flex:none}.member-email{flex:1;overflow-wrap:anywhere}.role-control{width:auto;min-width:140px}.role-control select{padding:6px 8px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .class-start{display:grid;align-content:start;justify-items:start;gap:12px}.class-start p{margin-bottom:4px}.class-start .inline-form{width:100%}.schedule-opt{display:flex;align-items:center;gap:8px;font-size:.85rem}.schedule-opt input{width:auto}.schedule-section{margin-bottom:24px}.schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.schedule-day .class-table{min-width:100%}.class-day{margin-top:16px}.class-day h3{margin-bottom:6px}.schedule-day .sec h2{margin-top:3px}
 .task-groups{display:grid;gap:24px}.task-group{display:grid;gap:10px}.task-group-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px}.task-group-head h2{font-size:1.15rem}.task-group-head p{margin-top:3px}.compact-empty{padding:20px 12px}.task-title{font-weight:600}.class-task .task-title{text-decoration:none;color:var(--ink)}
+.timer-layout{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(0,1.15fr);gap:20px;align-items:start}
+.timer-card{display:grid;justify-items:center;gap:22px;padding:28px}
+.timer-card-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.timer-kicker{font-size:.7rem;letter-spacing:.12em;color:var(--mute);font-weight:700;margin-bottom:5px}
+.timer-running,.flight-status{font-size:.78rem;font-weight:650;padding:5px 10px;border:1px solid var(--line);border-radius:999px;white-space:nowrap}
+.timer-display-wrap{display:grid;place-items:center;width:100%;min-height:160px}
+.timer-display{font-variant-numeric:tabular-nums;font-size:clamp(4rem,9vw,6.5rem);line-height:1;font-weight:650;letter-spacing:-.07em}
+.timer-duration{display:grid;justify-items:center;gap:6px}
+.timer-duration>label{font-size:.85rem;font-weight:600}
+.timer-duration-inputs{display:flex;align-items:center;gap:6px}
+.timer-duration-inputs input{width:74px;text-align:center;font-variant-numeric:tabular-nums}
+.timer-duration-inputs span{font-size:.8rem;color:var(--mute)}
+.timer-duration>small{font-size:.75rem;color:var(--mute)}
+.timer-controls{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+.timer-hint{font-size:.84rem;color:var(--mute);text-align:center}
+.timer-options{display:grid;gap:22px;min-width:0}
+.timer-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.timer-mode{display:grid;gap:4px;align-content:start;min-height:78px;padding:11px 10px;border:1px solid var(--line);border-radius:9px;background:var(--sf);color:var(--ink);text-align:left;font:inherit;cursor:pointer}
+.timer-mode strong{font-size:.83rem}
+.timer-mode span{font-size:.72rem;color:var(--mute);line-height:1.3}
+.timer-mode:hover,.timer-mode.selected{border-color:var(--ink)}
+.timer-mode.selected{box-shadow:inset 0 -2px var(--ink)}
+.flight-card{display:none;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:var(--sf);padding:20px;box-shadow:0 12px 32px #191a2b08}
+.flight-card.active{display:block}
+.flight-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.flight-heading h2{font-size:1.2rem}
+.flight-map{margin:16px -8px 10px;overflow:hidden;border:1px solid #e8eaf2;border-radius:11px;background:radial-gradient(ellipse at 50% 48%,#fff 0,#f6f7fb 100%)}
+.flight-map svg{display:block;width:100%;height:auto;min-height:150px}
+.map-land{fill:#e8ebf1;stroke:#dfe3eb;stroke-width:1}
+.flight-route{fill:none;stroke:#bdc3d3;stroke-width:2;stroke-dasharray:3 8;stroke-linecap:round}
+.flight-progress{fill:none;stroke:url(#flight-gradient);stroke-width:3.5;stroke-linecap:round;stroke-dasharray:1000;stroke-dashoffset:1000}
+.flight-origin{fill:#fff;stroke:#6178e8;stroke-width:3}
+.flight-destination{fill:#fff;stroke:#aeb5c7;stroke-width:2.5}
+.map-label{fill:#666d80;font:600 12px var(--font)}
+.flight-plane{fill:#586ee0;filter:drop-shadow(0 2px 3px #191a2b30);transition:transform .25s linear}
+.flight-cities{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0 12px}
+.flight-cities span{display:grid;gap:1px}
+.flight-cities span:last-child{text-align:right}
+.flight-cities b{font-size:.78rem;letter-spacing:.04em}.flight-cities small,.flight-arrival{font-size:.73rem;color:var(--mute)}
+.flight-cities .flight-arrival{flex:1;text-align:center}
+.flight-city{min-width:52px}
+.flight-progress-track{height:4px;overflow:hidden;border-radius:10px;background:#eceef4}
+.flight-progress-track span{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#6178e8,#8997ed);transition:width .25s linear}
+@media(max-width:500px){
+ .flight-card{padding:14px}
+ .flight-map svg{min-height:125px}
+}
 @media(max-width:860px){
  .shell{display:block}
  nav{position:fixed;inset:auto 0 0 0;height:auto;flex-direction:row;justify-content:flex-start;overflow-x:auto;padding:6px 6px calc(6px + env(safe-area-inset-bottom));border-right:0;border-top:1px solid var(--line);z-index:20;gap:0}
@@ -96,6 +143,7 @@ textarea{min-height:84px;resize:vertical}
  .row2{grid-template-columns:1fr}.set{grid-template-columns:1fr}.set .btns{justify-content:flex-start}
  .inline-form{align-items:stretch;flex-wrap:wrap}.inline-form label{width:100%}.inline-form input{max-width:none;flex:1}
  .class-layout{grid-template-columns:1fr}.class-sidebar{position:static}.schedule-grid{grid-template-columns:1fr}
+ .timer-layout{grid-template-columns:1fr}
  #toasts{bottom:84px;left:12px;right:12px}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

@@ -19,6 +19,7 @@ Schooly auf einem HTTPS-fähigen statischen Host bereitstellen. `index.html` ist
 - Einstellungen: Wochenbeginn, Standardansicht, Standardfächer, JSON-Sicherung (Export/Import), CSV-Export, Demo-Modus, Zurücksetzen
 - Klassenverwaltung mit Rollen, Einladungen, Aufgaben und Verwaltung der Mitgliedschaft
 - Stundenplan: eigener Tab mit persönlichem und Klassen-Stundenplan. Persönliche Stunden können unabhängig vom Klassenplan geändert und entfernt werden
+- Lern-Timer mit normaler Anzeige und animierter Flugroute von Berlin nach Tokio; Laufzeiten bleiben beim Ansichtswechsel und Neuladen erhalten
 - Aufgaben: getrennte Bereiche für persönliche und Klassenaufgaben im lokalen Prototyp
 
 ## Speicherung
@@ -36,6 +37,7 @@ Die Haupt-App speichert Aufgaben und Einstellungen lokal unter `hm.v1` zwischen 
 | `js/calendar.js` | Monats- und 7-Tage-Ansicht |
 | `js/settings.js` | Einstellungen, Import/Export, Demo, Reset |
 | `js/schedule.js` | Persönlicher Stundenplan und Ansicht der Prototyp-Klassenpläne |
+| `js/timer.js` | Lern-Timer mit wählbaren Anzeigen und gespeicherter Laufzeit |
 | `js/classsystem.js` | Lokale Debug-Anmeldung, Klassen, Rollen, Einladungen und Prototyp-Synchronisierung |
 | `js/classes.js` | Firebase-Klassenverwaltung |
 | `js/app.js` | Router, Dashboard, Dialoge, zentrale Event-Delegation |
